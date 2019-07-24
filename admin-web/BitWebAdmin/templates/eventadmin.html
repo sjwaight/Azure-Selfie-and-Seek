@@ -1,0 +1,20 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<h2>Event Admin</h2>
+{% if savedstatus != "" %}
+<div id="statustext" class="alert alert-{{savedstatus}}">
+    {% if savedstatus == "success"%}
+        Saved Event data successfully.
+    {% else %}
+        System error when saving Event data, please try again.
+    {% endif %}
+</div>
+{% endif %}
+<form action="" method="post" name="gameadmin">
+    {{form.hidden_tag()
+    }}
+    {{form.event_location.label}} {{form.event_location}}<br />
+    {{form.person_group.label}} {{form.person_group}}<br />
+    <button class="btn btn-primary" type="submit">Update</button>
+    </form>
+{% endblock %}

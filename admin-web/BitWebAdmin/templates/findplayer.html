@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}</h2>
+
+<form action="confirmplayer" method="post" name="findplayer">
+    {{form.hidden_tag()}}
+    {{form.user_name}}
+
+    <button class="btn btn-primary" type="submit">Find Player</button>
+</form>
+
+{% endblock %}

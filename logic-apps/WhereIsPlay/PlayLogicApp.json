@@ -1,0 +1,772 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "twitter_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "twitter"
+    },
+    "twitter_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "DevBitWhere"
+    },
+    "faceapi_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "faceapi"
+    },
+    "faceapi_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "BitFaceApi"
+    },
+    "faceapi_1_apiKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "API Key"
+      }
+    },
+    "faceapi_1_siteUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Root site url (Example: https://westus.api.cognitive.microsoft.com ).If not specified site url will be defaulted to 'https://westus.api.cognitive.microsoft.com'."
+      },
+      "defaultValue": "https://westus2.api.cognitive.microsoft.com/face/v1.0"
+    },
+    "azuretables_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "azuretables"
+    },
+    "azuretables_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "bittablestorage"
+    },
+    "azuretables_1_storageaccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of your storage account"
+      },
+      "defaultValue": "whereisbitv2"
+    },
+    "azuretables_1_sharedkey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The shared storage key of your storage account"
+      }
+    },
+    "twitter_Connection_Name": {
+      "type": "string",
+      "defaultValue": "twitterconnect"
+    },
+    "twitter_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": "TwitterConnect"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Check_that_Tweet_contains_at_most_one_media_item": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@length(triggerBody()?['MediaUrls'])",
+                      1
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Read_player_record_from_table_storage": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['azuretables']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "/Tables/@{encodeURIComponent('playerlist')}/entities",
+                    "queries": {
+                      "$filter": "PartitionKey eq '@{triggerBody()?['UserDetails']?['UserName']}' and confirmed eq true"
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Check_if_lookup_succeeded": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "greater": [
+                          "@length(body('Read_player_record_from_table_storage')?['value'])",
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Load_game_configuration_from_table_storage": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['azuretables']['connectionId']"
+                          }
+                        },
+                        "method": "get",
+                        "path": "/Tables/@{encodeURIComponent('gameconfig')}/entities(PartitionKey='@{encodeURIComponent('config')}',RowKey='@{encodeURIComponent('bit')}')"
+                      },
+                      "runAfter": {
+                        "Parse_player_entity_from_table_storage": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Parse_game_configuration_from_storage": {
+                      "type": "ParseJson",
+                      "inputs": {
+                        "content": "@body('Load_game_configuration_from_table_storage')",
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "odata.metadata": {
+                              "type": "string"
+                            },
+                            "odata.etag": {
+                              "type": "string"
+                            },
+                            "PartitionKey": {
+                              "type": "string"
+                            },
+                            "RowKey": {
+                              "type": "string"
+                            },
+                            "Timestamp": {
+                              "type": "string"
+                            },
+                            "activeevent": {
+                              "type": "string"
+                            },
+                            "activetier": {
+                              "type": "integer"
+                            },
+                            "etag": {
+                              "type": "string"
+                            },
+                            "persongroup": {
+                              "type": "string"
+                            },
+                            "currentwinner": {
+                              "type": "string"
+                            },
+                            "currentbit": {
+                              "type": "string"
+                            },
+                            "currentpersonid": {
+                              "type": "string"
+                            },
+                            "bitclearurl": {
+                              "type": "string"
+                            },
+                            "bitimgurl": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Load_game_configuration_from_table_storage": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Set_Media_URL_variable": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "TweetMediaURL",
+                        "value": "@{first(triggerBody()?['MediaUrls'])}"
+                      },
+                      "runAfter": {
+                        "Set_variable_to_tell_us_who_bit_player_is": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Parse_player_entity_from_table_storage": {
+                      "type": "ParseJson",
+                      "inputs": {
+                        "content": "@first(body('Read_player_record_from_table_storage')?['value'])",
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "personid": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "boolean"
+                            },
+                            "reqid": {
+                              "type": "string"
+                            },
+                            "byteround": {
+                              "type": "integer"
+                            },
+                            "_rid": {
+                              "type": "string"
+                            },
+                            "_self": {
+                              "type": "string"
+                            },
+                            "_etag": {
+                              "type": "string"
+                            },
+                            "_attachments": {
+                              "type": "string"
+                            },
+                            "_ts": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      },
+                      "runAfter": {}
+                    },
+                    "Set_variable_to_tell_us_who_bit_player_is": {
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "BitUserId",
+                        "value": "@body('Parse_game_configuration_from_storage')?['currentbit']"
+                      },
+                      "runAfter": {
+                        "Parse_game_configuration_from_storage": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Detect_faces": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['faceapi']['connectionId']"
+                          }
+                        },
+                        "method": "post",
+                        "body": {
+                          "url": "@variables('TweetMediaURL')"
+                        },
+                        "path": "/face/v1.0/detect",
+                        "queries": {
+                          "returnFaceId": "true",
+                          "returnFaceAttributes": "age,gender,headPose,smile,facialHair,glasses",
+                          "returnFaceLandmarks": "true"
+                        }
+                      },
+                      "runAfter": {
+                        "Set_Media_URL_variable": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Did_we_find_any_faces_in_uploaded_image": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "not": {
+                              "equals": [
+                                "@actions('Detect_faces')['status']",
+                                "Failed"
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "For_each": {
+                          "type": "Foreach",
+                          "foreach": "@body('Detect_faces')",
+                          "actions": {
+                            "Find_person_from_face": {
+                              "type": "ApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "connection": {
+                                    "name": "@parameters('$connections')['faceapi']['connectionId']"
+                                  }
+                                },
+                                "method": "post",
+                                "body": {
+                                  "faceId": "@items('For_each')?['faceId']",
+                                  "personGroupId": "@body('Parse_game_configuration_from_storage')?['persongroup']",
+                                  "personId": "@body('Parse_game_configuration_from_storage')?['currentpersonid']"
+                                },
+                                "path": "/face/v1.0/verify"
+                              },
+                              "runAfter": {}
+                            },
+                            "Condition": {
+                              "type": "If",
+                              "expression": {
+                                "and": [
+                                  {
+                                    "equals": [
+                                      "@body('Find_person_from_face')?['isIdentical']",
+                                      "@true"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "actions": {
+                                "Build_winner_log_message": {
+                                  "type": "Compose",
+                                  "inputs": {
+                                    "RowKey": "@{guid()}",
+                                    "reqid": "@{variables('RequestIdentifier')}",
+                                    "PartitionKey": "@{triggerBody()?['UserDetails']?['UserName']}",
+                                    "postbody": "@{triggerBody()?['TweetText']}",
+                                    "bit": "@{variables('BitUserId')}",
+                                    "gamelevel": "@body('Parse_game_configuration_from_storage')?['activetier']",
+                                    "submittedimage": "@{variables('TweetMediaURL')}",
+                                    "status": "matched_bitly"
+                                  },
+                                  "runAfter": {}
+                                },
+                                "Write_winner_log_message": {
+                                  "type": "ApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "connection": {
+                                        "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                      }
+                                    },
+                                    "method": "post",
+                                    "body": "@outputs('Build_winner_log_message')",
+                                    "path": "/Tables/@{encodeURIComponent('playlogs')}/entities"
+                                  },
+                                  "runAfter": {
+                                    "Build_winner_log_message": [
+                                      "Succeeded"
+                                    ]
+                                  }
+                                }
+                              },
+                              "runAfter": {
+                                "Find_person_from_face": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "else": {
+                                "actions": {
+                                  "Build_log_message_for_no_match": {
+                                    "type": "Compose",
+                                    "inputs": {
+                                      "RowKey": "@{guid()}",
+                                      "reqid": "@{variables('RequestIdentifier')}",
+                                      "PartitionKey": "@{triggerBody()?['UserDetails']?['UserName']}",
+                                      "postbody": "@{triggerBody()?['TweetText']}",
+                                      "status": "no_face_match",
+                                      "gamelevel": "@body('Parse_game_configuration_from_storage')?['activetier']",
+                                      "confidencelevel": "@body('Find_person_from_face')?['confidence']"
+                                    },
+                                    "runAfter": {}
+                                  },
+                                  "Write_no_match_log_message": {
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                      "host": {
+                                        "connection": {
+                                          "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                        }
+                                      },
+                                      "method": "post",
+                                      "body": "@outputs('Build_log_message_for_no_match')",
+                                      "path": "/Tables/@{encodeURIComponent('playlogs')}/entities"
+                                    },
+                                    "runAfter": {
+                                      "Build_log_message_for_no_match": [
+                                        "Succeeded"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "description": "Is Identitical set to 'true' if confidence level is greater than 50%"
+                            }
+                          },
+                          "runAfter": {},
+                          "description": "There may be multiple faces in the provided image so we need to process each of them."
+                        }
+                      },
+                      "runAfter": {
+                        "Detect_faces": [
+                          "Succeeded",
+                          "Failed"
+                        ]
+                      },
+                      "else": {
+                        "actions": {
+                          "Create_no_faces_detected_log_message": {
+                            "type": "Compose",
+                            "inputs": {
+                              "RowKey": "@{guid()}",
+                              "reqid": "@{variables('RequestIdentifier')}",
+                              "PartitionKey": "@{triggerBody()?['UserDetails']?['UserName']}",
+                              "status": "no_faces_in_image"
+                            },
+                            "runAfter": {}
+                          },
+                          "Write_no_faces_log_message_to_table_storage": {
+                            "type": "ApiConnection",
+                            "inputs": {
+                              "host": {
+                                "connection": {
+                                  "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                }
+                              },
+                              "method": "post",
+                              "body": "@outputs('Create_no_faces_detected_log_message')",
+                              "path": "/Tables/@{encodeURIComponent('playlogs')}/entities"
+                            },
+                            "runAfter": {
+                              "Create_no_faces_detected_log_message": [
+                                "Succeeded"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Read_player_record_from_table_storage": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  },
+                  "else": {
+                    "actions": {
+                      "Create_log_message_for_unregistered_user": {
+                        "type": "Compose",
+                        "inputs": {
+                          "RowKey": "@{guid()}",
+                          "reqid": "@{variables('RequestIdentifier')}",
+                          "PartitionKey": "@{triggerBody()?['UserDetails']?['UserName']}",
+                          "status": "user_not_registered_or_confirmed"
+                        },
+                        "runAfter": {}
+                      },
+                      "Write_log_message_to_table_storage": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connection": {
+                              "name": "@parameters('$connections')['azuretables']['connectionId']"
+                            }
+                          },
+                          "method": "post",
+                          "body": "@outputs('Create_log_message_for_unregistered_user')",
+                          "path": "/Tables/@{encodeURIComponent('playlogs')}/entities"
+                        },
+                        "runAfter": {
+                          "Create_log_message_for_unregistered_user": [
+                            "Succeeded"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Initialise_Tweet_media_URL_variable": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Create_log_message_for_no_media_error": {
+                    "type": "Compose",
+                    "inputs": {
+                      "RowKey": "@{guid()}",
+                      "reqid": "@{variables('RequestIdentifier')}",
+                      "PartitionKey": "@{triggerBody()?['UserDetails']?['UserName']}",
+                      "status": "no_media"
+                    },
+                    "runAfter": {}
+                  },
+                  "Write_no_media_error_to_storage": {
+                    "type": "ApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connection": {
+                          "name": "@parameters('$connections')['azuretables']['connectionId']"
+                        }
+                      },
+                      "method": "post",
+                      "body": "@outputs('Create_log_message_for_no_media_error')",
+                      "path": "/Tables/@{encodeURIComponent('playlogs')}/entities"
+                    },
+                    "runAfter": {
+                      "Create_log_message_for_no_media_error": [
+                        "Succeeded"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "Create_document_for_logging": {
+              "type": "Compose",
+              "inputs": {
+                "RowKey": "@{guid()}",
+                "reqid": "@{variables('RequestIdentifier')}",
+                "PartitionKey": "@{triggerBody()?['UserDetails']?['UserName']}",
+                "postbody": "@{triggerBody()?['TweetText']}",
+                "status": "initial_request"
+              },
+              "runAfter": {
+                "Initialise_Tweet_media_URL_variable": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialise_Request_Unique_Identifier_variable": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "RequestIdentifier",
+                    "type": "String",
+                    "value": "@{guid()}"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialise_Bit_User_ID_variable": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialise_Tweet_media_URL_variable": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "TweetMediaURL",
+                    "type": "String"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Initialise_Request_Unique_Identifier_variable": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Initialise_Bit_User_ID_variable": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "BitUserId",
+                    "type": "String"
+                  }
+                ]
+              },
+              "runAfter": {}
+            },
+            "Write_log_entry_to_table_storage": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": "@outputs('Create_document_for_logging')",
+                "path": "/Tables/@{encodeURIComponent('playlogs')}/entities"
+              },
+              "runAfter": {
+                "Create_document_for_logging": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_new_tweet_is_posted": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['twitter']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/onnewtweet",
+                "queries": {
+                  "searchQuery": "BitWhere #found"
+                }
+              },
+              "recurrence": {
+                "frequency": "Second",
+                "interval": 60
+              },
+              "splitOn": "@triggerBody()?['value']"
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuretables": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'azuretables')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azuretables_1_Connection_Name'))]",
+                "connectionName": "[parameters('azuretables_1_Connection_Name')]"
+              },
+              "faceapi": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'faceapi')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('faceapi_1_Connection_Name'))]",
+                "connectionName": "[parameters('faceapi_1_Connection_Name')]"
+              },
+              "twitter": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'twitter')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('twitter_Connection_Name'))]",
+                "connectionName": "[parameters('twitter_Connection_Name')]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('azuretables_1_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('faceapi_1_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('twitter_Connection_Name'))]"
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('twitter_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'twitter')]"
+        },
+        "displayName": "[parameters('twitter_1_Connection_DisplayName')]"
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('faceapi_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'faceapi')]"
+        },
+        "displayName": "[parameters('faceapi_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "apiKey": "[parameters('faceapi_1_apiKey')]",
+          "siteUrl": "[parameters('faceapi_1_siteUrl')]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('azuretables_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'azuretables')]"
+        },
+        "displayName": "[parameters('azuretables_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "storageaccount": "[parameters('azuretables_1_storageaccount')]",
+          "sharedkey": "[parameters('azuretables_1_sharedkey')]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('twitter_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'twitter')]"
+        },
+        "displayName": "[parameters('twitter_Connection_DisplayName')]"
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,11 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<h2>Game Display Mode</h2>
+<p>Select the mode you want the screen to be displaying.</p>
+<p><strong>Note:</strong> This can take up to 1 minute to change the screen, so please be patient once you hit 'Choose Now!'</p>
+<form action="" method="post" name="gamemode">
+    {{form.hidden_tag()}}
+    {{form.game_mode.label}} {{form.game_mode}}<br />
+    <button class="btn btn-primary" type="submit">Choose Now!</button>
+</form>
+{% endblock %}

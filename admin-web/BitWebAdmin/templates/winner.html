@@ -1,0 +1,82 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<h2>View Winner</h2>
+<p>Click 'start' to begin listening for new winners - we'll check every 1 minute.</p>
+<form action="" method="post" name="gameadmin">
+    {{form.hidden_tag()}}
+    {{form.game_round.label}} {{form.game_round}}<br />
+    <p><button id="start" class="btn btn-success btn-large">Start listening</button><a href="#" id="stop" class="btn btn-danger btn-large hidden">Stop listening</a> </p>
+</form>
+    <div id="waitingitem" class="hidden"><img src="static/content/pl.gif" height="32" width="32"/> Waiting for winners.</div>
+
+<ol id="winnerlist"></ol>
+
+<p><a href="{{ url_for('displaymode') }}" class="btn btn-primary btn-large">Change Game Mode &raquo;</a> | <a href="/">Home</a></p>
+
+{% endblock %}
+{% block scripts %}
+<script language="JavaScript">
+
+    var list = document.getElementById('winnerlist');
+    var timer;
+
+    function populateList(item, index) {
+        var entry = document.createElement('li');
+        var newItem = item.PartitionKey + " - " + item.postbody;
+        entry.appendChild(document.createTextNode(newItem));
+        list.appendChild(entry);
+    }
+
+    function checkStatus(gameRound) {
+       
+        $(list).empty();
+
+        $.ajax({
+            url: '/winnerstatus?round=' + gameRound,
+            type: 'GET',
+            success: function (response) {
+
+                var entries = jQuery.parseJSON(response);
+
+                if (entries.length > 0) {
+                    $(list).empty();
+                    entries.forEach(populateList);
+                }
+
+                if (entries.length < 1) {
+                    timer = setTimeout(function () {
+                        checkStatus($("#game_round").val());
+                    }, 60000);
+                }
+                else {
+                    $("#stop").addClass("hidden");
+                    $("#waitingitem").addClass("hidden");
+                    $("#start").removeClass("hidden");
+                }
+            },
+            error: function (error) {
+                $("#stop").addClass("hidden");
+                $("#waitingitem").addClass("hidden");
+                $("#start").removeClass("hidden");
+                clearTimeout(timer);
+            }
+        });
+    }
+
+    $("#start").click(function (event) {
+        event.preventDefault();
+        $("#start").addClass("hidden");
+        $("#waitingitem").removeClass("hidden");
+        $("#stop").removeClass("hidden");
+        checkStatus($("#game_round").val());
+    });
+
+    $("#stop").click(function (event) {
+        event.preventDefault();
+        $("#stop").addClass("hidden");
+        $("#waitingitem").addClass("hidden");
+        $("#start").removeClass("hidden");
+        clearTimeout(timer);
+    });
+</script>
+{% endblock %}

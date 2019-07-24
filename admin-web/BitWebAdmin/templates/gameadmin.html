@@ -1,0 +1,11 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<h2>Select Hidden Player</h2>
+<p>Choose the new game round you wish to play and we will randomly select a new 'hidden' player for you.</p>
+<p><strong>Note:</strong> It can take a while to create the new image, so please be patient once you hit 'Choose Now!'</p>
+<form action="" method="post" name="gameadmin">
+    {{form.hidden_tag()}}
+    {{form.game_round.label}} {{form.game_round}}<br />
+    <button class="btn btn-primary" type="submit">Choose Now!</button>
+</form>
+{% endblock %}

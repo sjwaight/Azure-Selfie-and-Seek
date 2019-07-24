@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block content %}
+&nbsp;<br/>
+<div class="row">
+    <div class="col-md-4">
+        <p><a href="{{ url_for('findplayer') }}" class="btn btn-primary btn-large">Confirm players &raquo;</a></p>
+        <p><a href="{{ url_for('gameadmin') }}" class="btn btn-primary btn-large">Select hidden player &raquo;</a></p>
+        <p><a href="{{ url_for('winner') }}" class="btn btn-primary btn-large">View winner &raquo;</a></p>        
+    </div>
+    <div class="col-md-4">
+        <p><a href="{{ url_for('displaymode') }}" class="btn btn-primary btn-large">Display mode &raquo;</a></p>
+        <p><a href="{{ url_for('eventadmin') }}" class="btn btn-primary btn-large">Event configuration &raquo;</a></p>
+        <p><a href="{{ url_for('trainmodel') }}" class="btn btn-primary btn-large">Train face group model &raquo;</a></p>
+    </div>
+</div>
+    {% endblock %}

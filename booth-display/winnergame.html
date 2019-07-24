@@ -1,0 +1,83 @@
+<html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Azure Selfie and Seek - Winner!</title>
+            <link rel="stylesheet" href="css/boot.css" />
+            <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+            <style type="text/css">
+                body {
+                    overflow:hidden;
+                }
+            </style>
+        </head>
+        <body>
+            <!-- <div id="beta" style="top: 0;left: 0; float: left;">
+                <img src="img/b.png" width="150"/>
+            </div> -->
+            <div class="container">
+                <h2 id="header">Winner! Azure Selfie and Seek</h2>
+                <h3 id="roundnumber"></h3>
+                <div class="row justify-content-md-center">
+                    <div class="col">
+                        <h4 id="bitname"></h4>
+                        <img id="bitselfieimg" src="img/loading.png" width="300" alt="Original selfie"/>
+                    </div>
+                    <div class="col">
+                        <h4 id="bitheader">Winning entry (did it match?!)</h4>
+                        <img id="bitclearimg" src="img/loading.png" width="300" alt="Winner's picture"/>
+                    </div>                    
+                    <div class="col">
+                        <h4 id="winnername"></h4>
+                        <img id="winner" src="img/loading.png" width="300" alt="Winner!"/>
+                    </div>
+                </div>
+                <div class="form-group"></div>
+                <div class="row justify-content-md-center">
+                     <h3>Join in: https://YOUR_INDEX_LINK</h3>
+                </div>
+            </div>
+        
+            <script>
+(function() {
+  var gameAPI = 'https://YOUR-FUNCTIONS-API.azurewebsites.net/api/winnergame?code=FUNC-API-KEY';
+  $.getJSON(gameAPI)
+    .done(function( json ) {
+            $('#header').text("Winner! Where's Bit? @ " + json.activeevent);
+            $('#bitselfieimg').attr('src', json.bitclearurl);
+            $('#bitclearimg').attr('src', json.winnersubmission);
+            $('#winner').attr('src', json.winnerimgurl);
+            $('#winnername').text("Winner: @" + json.currentwinner);
+            $('#bitname').text("Bit: @" + json.currentbit);
+        });
+    checkStatus();
+})();
+
+function checkStatus() {
+    $.ajax({
+        url: 'https://YOUR-FUNCTIONS-API.azurewebsites.net/api/gamestatus?code=FUNC-API-KEY',
+        type: 'GET',
+        success: function (response) {
+
+            console.log(response);
+
+            switch (response) {
+                case "pending":
+                    window.location.href = "pendinggame.html";
+                    break;
+                case "active":
+                    window.location.href = "activegame.html";
+                default:
+                    setTimeout(function () {
+                        checkStatus();
+                    }, 60000)
+            }
+        },
+        error: function (error) {
+            console.log(error);
+        }
+    });
+}
+        </script>
+        </body>
+        </html>

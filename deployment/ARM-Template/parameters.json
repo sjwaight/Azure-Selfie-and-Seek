@@ -1,0 +1,63 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_bitadmin_name": {
+            "value": null
+        },
+        "connections_faceapi_name": {
+            "value": null
+        },
+        "sites_boothboardapi_name": {
+            "value": null
+        },
+        "serverfarms_bitadmin_name": {
+            "value": null
+        },
+        "connections_twitter_1_name": {
+            "value": null
+        },
+        "connections_azuretables_name": {
+            "value": null
+        },
+        "vaults_whereisbitv2_name": {
+            "value": null
+        },
+        "workflows_wheresbitrego_name": {
+            "value": null
+        },
+        "components_ai_bitadmin_name": {
+            "value": null
+        },
+        "components_whereisbitv2_name": {
+            "value": null
+        },
+        "components_boothboardapi_name": {
+            "value": null
+        },
+        "workflows_wheresbitgameengine_name": {
+            "value": null
+        },
+        "storageAccounts_whereisbitv2_name": {
+            "value": null
+        },
+        "accounts_whereisbitv2_name": {
+            "value": null
+        },
+        "storageAccounts_wheresbitv2api90f0_name": {
+            "value": null
+        },
+        "connections_azuretables_externalid": {
+            "value": null
+        },
+        "connections_faceapi_externalid": {
+            "value": null
+        },
+        "connections_twitter_1_externalid": {
+            "value": null
+        },
+        "key_vault_aad_sp_objectid": {
+            "value": null
+        }
+    }
+}

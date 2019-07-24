@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Select new hidden player</h2>
+<div id="statustext" class="alert alert-success">Saved!</div>
+<p><strong>Game Round:</strong> {{gameround}}</p>
+<p><strong>Bitly Handle:</strong> {{bitly}}</p>
+<img id="playerimage" src="{{bitlyurl}}" width="300" /><br /><br />
+<p><a href="{{ url_for('displaymode') }}" class="btn btn-primary btn-large">Change Game Mode &raquo;</a> | <a href="/">Home</a></p>
+{% endblock %}

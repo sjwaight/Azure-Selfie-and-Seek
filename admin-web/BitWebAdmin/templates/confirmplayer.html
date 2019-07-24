@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+    {% if playersave == "" %}
+        {% if playerlookup == "" %}
+                {% if imgurl %}
+<form action="" method="post" name="gameadmin">
+    {{form.hidden_tag()}}
+    <p><strong>Twitter Handle</strong> {{form.user_name}}</p>
+    <p>{{form.user_confirmed.label}} {{form.user_confirmed(default=is_confirmed)}}</p>
+    <img id="playerimage" src="{{imgurl}}" height="300" /><br /><br />
+    <button class="btn btn-primary" type="submit">Confirm This Player!</button>
+</form>
+                {% else %}
+<h3>No valid photo supplied</h3>
+<p>The player needs to supply a selfie with a face that is identifiable by Face API. They can resubmit via Twitter can then come back to the stand.</p>
+                {% endif %}
+        {% else %}
+<h3>{{playerlookup}}</h3>
+<p>Check player name '{{form.user_name}}' is valid. Click 'back' and fix if you made a typo.</p>
+        {% endif %}
+    {% else %}
+        {% if playersave == "Saved OK" %}
+
+<p class="alert alert-success">Saved player details OK - they can now join in!</p>
+
+        {% else %}
+
+<p class="alert alert-error">Error when saving player - '{{playersave}}'.</p>
+
+        {% endif %}
+
+    {% endif %}
+<hr/>
+<p><a href="{{ url_for('findplayer')}}" class="btn btn-primary btn-large">Confirm Another Player &raquo;</a></p>
+{% endblock %}

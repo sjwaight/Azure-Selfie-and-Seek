@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "wheresbitrego"
+    },
+    "faceapi_1_apiKey": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/YOUR_SUBSCRIPTION/resourceGroups/YOUR_RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/YOUR_KEY_VAULT"
+        },
+        "secretName": "gamefacekey"
+      }
+    },
+    "azuretables_1_sharedkey": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/YOUR_SUBSCRIPTION/resourceGroups/YOUR_RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/YOUR_KEY_VAULT"
+        },
+        "secretName": "gamestoragekey"
+      }
+    }
+  }
+}

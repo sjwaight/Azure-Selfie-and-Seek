@@ -1,0 +1,59 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure Selfie and Seek - Pending Game</title>
+    <link rel="stylesheet" href="css/boot.css" />
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+</head>
+<body>
+    <!-- <div id="beta" style="top: 0;left: 0; float: left;">
+            <img src="img/b.png" width="150"/>
+    </div> -->
+    <div class="container">
+        <div class="row justify-content-md-center">
+            &nbsp;
+        </div>
+        <div class="row justify-content-md-center">                  
+            <h1 id="second">Shall we play a game?</h1>
+        </div>
+        <div class="row justify-content-md-center">
+                <img src="img/bitwally.png" alt="Bit-ly" height="380">
+        </div>
+        <div class="row justify-content-md-center">
+            <h1>https://YOUR_INDEX_LINK</h1>
+        </div>
+    </div>
+
+    <script language="JavaScript">
+        $(function () {
+            function checkStatus() {
+                $.ajax({
+                    url: 'https://YOUR-FUNCTIONS-API.azurewebsites.net/api/gamestatus?code=FUNC-API-KEY',
+                    type: 'GET',
+                    success: function (response) {
+    
+                        console.log(response);
+    
+                        switch (response) {
+                            case "active":
+                                window.location.href = "activegame.html";
+                                break;
+                            case "winner":
+                                window.location.href = "winnergame.html";
+                            default:
+                                setTimeout(function () {
+                                    checkStatus();
+                                }, 60000)
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+            }
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

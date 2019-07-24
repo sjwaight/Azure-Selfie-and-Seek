@@ -1,0 +1,75 @@
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure Selfie and Seek - Active Game</title>
+    <link rel="stylesheet" href="css/boot.css" />
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <style type="text/css">
+        body {
+            overflow:hidden;
+        }
+</style>
+</head>
+<body>
+<!-- <div id="beta" style="top: 0;left: 0; float: left;">
+    <img src="img/b.png" width="150"/>
+</div> -->
+    <div class="container">
+        <div class="row">
+            <h2 id="header">Azure Selfie and Seek</h2>
+        </div>
+        <div class="row justify-content-md-center">
+            <div class="col">
+                <img id="bitimg" src="img/loading.png" width="400" alt="This is Bit!"/>
+            </div>
+            <div class="col">
+                <a class="twitter-timeline" data-theme="dark" height="500" width="400" href="https://twitter.com/YOURTWITTER?ref_src=twsrc%5Etfw">Tweets by YOURTWITTER</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+            </div>
+        </div>
+        <div class="form-group"></div>
+        <div class="row justify-content-md-center">
+             <h3>Join in: https://YOUR_INDEX_LINK</h3>
+        </div>
+    </div>
+
+    <script>
+(function() {
+  var gameAPI = 'https://YOUR-FUNCTIONS-API.azurewebsites.net/api/activegame?code=FUNC-API-KEY';
+  $.getJSON(gameAPI)
+    .done(function( json ) {
+            $('#header').text("Where's Bit? @ " + json.activeevent);
+            $('#bitimg').attr('src', json.bitimgurl);          
+        });
+    checkStatus();
+})();
+
+function checkStatus() {
+    $.ajax({
+        url: 'https://YOUR-FUNCTIONS-API.azurewebsites.net/api/gamestatus?code=FUNC-API-KEY',
+        type: 'GET',
+        success: function (response) {
+
+            console.log(response);
+
+            switch (response) {
+                case "pending":
+                    window.location.href = "pendinggame.html";
+                    break;
+                case "winner":
+                    window.location.href = "winnergame.html";
+                default:
+                    setTimeout(function () {
+                        checkStatus();
+                    }, 60000)
+            }
+        },
+        error: function (error) {
+            console.log(error);
+        }
+    });
+}
+</script>
+</body>
+</html>
