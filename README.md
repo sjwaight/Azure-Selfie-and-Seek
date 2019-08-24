@@ -20,6 +20,8 @@ The components that make up the overall solution are:
 - Azure AD directory: used to protect the admin website (this is optional and can be commented out in the admin website if you don't want to use it).
 - Azure Application Insights: captures runtime exception information from the admin web application.
 
+> Note: the Core Function API and the business logic from the Python Flask Web App is also available as Python Functions that provide a single unified API and can be found in a [separate repository](https://github.com/sjwaight/Azure-Selfie-and-Seek-Python-Funcs).
+
 Players who want to play the game only need to have a public Twitter account and be prepared to post a selfie.
 
 ## Manual setup components
